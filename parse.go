@@ -31,7 +31,7 @@ const (
 	referenceTime string = "2006-01-02-15:04:05"
 )
 
-func main() {
+func main2() {
 	r := ParseErrorLog("/home/marcinja/dev/error-logs/error-2017-07-17-06:46:07.log")
 	for i := 0; i < len(r.testResults); i++ {
 		fmt.Println(r.testResults[i].name + " " + r.testResults[i].output + " " + strconv.Itoa(int(r.testResults[i].result)))
@@ -66,7 +66,7 @@ func ReadFile(name string) []string {
 func ParseErrorLog(name string) *Result {
 	lines := ReadFile(name)
 
-	dateTimeStr := strings.TrimSuffix(filepath.Base(name), ".log")
+	dateTimeStr := strings.TrimPrefix(strings.TrimSuffix(filepath.Base(name), ".log"), "error-")
 	dateTime, err := time.Parse(referenceTime, dateTimeStr)
 	if err != nil {
 		fmt.Println(err)

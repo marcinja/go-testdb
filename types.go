@@ -10,7 +10,10 @@ const (
 	PASSED = iota
 	SKIPPED
 	FAILED
+	UNDETERMINED
 )
+
+var StatusStrings = [...]string{"PASSED", "SKIPPED", "FAILED", "UNDETERMINED"}
 
 type Result struct {
 	commitHash    string
