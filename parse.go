@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -33,9 +32,7 @@ const (
 
 func main2() {
 	r := ParseErrorLog("/home/marcinja/dev/error-logs/error-2017-07-17-06:46:07.log")
-	for i := 0; i < len(r.testResults); i++ {
-		fmt.Println(r.testResults[i].name + " " + r.testResults[i].output + " " + strconv.Itoa(int(r.testResults[i].result)))
-	}
+	fmt.Println(r.dateTime.String())
 }
 
 // ReadFile reads the file with the given name and returns a slice of string,
@@ -179,6 +176,17 @@ func ParseErrorLog(name string) *Result {
 
 		default:
 		}
+	}
+
+	// Add all tests that were started and not heard back from as 'UNDETERMINED' tests.
+	for t := range testsStarted {
+		r := &TestResult{
+			name:     t,
+			result:   Status(UNDETERMINED),
+			output:   "",
+			duration: 0,
+		}
+		testResults = append(testResults, r)
 	}
 
 	return &Result{

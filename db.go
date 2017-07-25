@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -15,7 +16,7 @@ func main() {
 func InsertLogToDB(filename string, db *sql.DB) {
 	results := ParseErrorLog(filename)
 	dt := results.dateTime.Format(referenceTime)
-	log.Println(dt)
+	fmt.Println(dt)
 
 	testStmt, err := db.Prepare("INSERT tests SET commitHash=?,dateTime=?,name=?,result=?,output=?,duration=?")
 	if err != nil {
