@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -65,7 +66,7 @@ func ReadFile(name string) []string {
 func ParseErrorLog(name string) *Result {
 	lines := ReadFile(name)
 
-	dateTimeStr := strings.TrimSuffix(strings.TrimPrefix(name, "/home/marcinja/dev/error-logs/error-"), ".log")
+	dateTimeStr := strings.TrimSuffix(filepath.Base(name), ".log")
 	dateTime, err := time.Parse(referenceTime, dateTimeStr)
 	if err != nil {
 		fmt.Println(err)
