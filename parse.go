@@ -202,12 +202,22 @@ func handleSkippedTest(testOutput []string) *TestResult {
 		fmt.Println(err)
 	}
 
+	// A skipped test can have 0 or more lines of output.
+	var out string
+	if len(testOutput) < 3 {
+		out = ""
+	} else {
+		for i := 2; i < len(testOutput); i++ {
+			out = out + testOutput[i]
+		}
+	}
+
 	// Get the name of the test and other fields.
 	testName := testOutput[0]
 	r := &TestResult{
 		name:     testName,
 		result:   Status(SKIPPED),
-		output:   testOutput[2],
+		output:   out,
 		duration: dur,
 	}
 
@@ -227,12 +237,22 @@ func handleFailedTest(testOutput []string) *TestResult {
 		fmt.Println(err)
 	}
 
+	// A failed test can have 0 or more lines of output.
+	var out string
+	if len(testOutput) < 3 {
+		out = ""
+	} else {
+		for i := 2; i < len(testOutput); i++ {
+			out = out + testOutput[i]
+		}
+	}
+
 	// Get the name of the test and other fields.
 	testName := testOutput[0]
 	r := &TestResult{
 		name:     testName,
 		result:   Status(FAILED),
-		output:   testOutput[2],
+		output:   out,
 		duration: dur,
 	}
 

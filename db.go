@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	InsertLogsFromDirectory("/home/marcinja/dev/test-logs/")
+	InsertLogsFromDirectory("/home/marcinja/error-logs/")
 }
 
 func InsertLogToDB(filename string, db *sql.DB) {
@@ -35,7 +35,7 @@ func InsertLogToDB(filename string, db *sql.DB) {
 	}
 
 	for _, m := range results.moduleResults {
-		statusString := StatusStrings[int(m.result)]
+		statusString := StatusStrings[int(m.result)] // MySql expects a string type for its enum.
 		_, err := moduleStmt.Exec(results.commitHash, results.dateTime, m.name, statusString, int(m.duration.Seconds()))
 		if err != nil {
 			panic(err)
@@ -52,7 +52,10 @@ func InsertLogsFromDirectory(dir string) {
 	}
 	defer db.Close()
 
-	files, _ := ioutil.ReadDir(dir)
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		panic(err)
+	}
 	for _, f := range files {
 		if f.IsDir() {
 			continue
