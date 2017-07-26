@@ -3,8 +3,6 @@ parses Golang test output and places relevant data into a MySql database
 
 Currently it is specifically catered to the output of `make test-vlong` of Sia, but wouldn't take much effort to use with other Golang projects.
 #### TODO
-+ Add basic CLI.
-+ Add a config file that for the database config, filepaths, choice of directory, etc.
 + Add ability to query databases.
 
 #### Table Setup
