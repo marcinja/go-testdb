@@ -30,18 +30,13 @@ const (
 	referenceTime string = "2006-01-02-15:04:05"
 )
 
-func main2() {
-	r := ParseErrorLog("/home/marcinja/dev/error-logs/error-2017-07-17-06:46:07.log")
-	fmt.Println(r.dateTime.String())
-}
-
 // ReadFile reads the file with the given name and returns a slice of string,
 // one for each line of the file.
 func ReadFile(name string) []string {
 	var output []string
 	file, err := os.Open(name)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer file.Close()
 

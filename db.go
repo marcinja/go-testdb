@@ -9,10 +9,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func main() {
-	InsertLogsFromDirectory("/home/marcinja/error-logs/")
-}
-
 func InsertLogToDB(filename string, db *sql.DB) {
 	results := ParseErrorLog(filename)
 	dt := results.dateTime.Format(referenceTime)
@@ -45,7 +41,7 @@ func InsertLogToDB(filename string, db *sql.DB) {
 }
 
 func InsertLogsFromDirectory(dir string) {
-	dbInfo := ReadFile("db-info.txt")[0]
+	dbInfo := ReadFile(dbInfoFile)[0]
 	db, err := sql.Open("mysql",
 		dbInfo)
 	if err != nil {
@@ -63,4 +59,16 @@ func InsertLogsFromDirectory(dir string) {
 		}
 		InsertLogToDB(dir+f.Name(), db)
 	}
+}
+
+func InsertSingleLog(filename string) {
+	dbInfo := ReadFile(dbInfoFile)[0]
+	db, err := sql.Open("mysql",
+		dbInfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	InsertLogToDB(filename, db)
 }
