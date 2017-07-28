@@ -21,10 +21,10 @@ const (
 	failedTest string = "--- FAIL:"
 	passedTest string = "--- PASS:"
 
-	// Lines giving module results.
-	moduleFail   string = "FAIL	github.com/"
-	modulePass   string = "ok  	github.com/"
-	modulePrefix string = "github.com/NebulousLabs/Sia/"
+	// Lines giving package results.
+	packageFail   string = "FAIL	github.com/"
+	packagePass   string = "ok  	github.com/"
+	packagePrefix string = "github.com/NebulousLabs/Sia/"
 
 	//Reference time formatting for dateTimes.
 	referenceTime string = "2006-01-02-15:04:05"
@@ -67,7 +67,7 @@ func ParseErrorLog(name string) *Result {
 	// The other Result fields:
 	var commitHash string
 	var testResults []*TestResult
-	var moduleResults []*ModuleResult
+	var packageResults []*PackageResult
 
 	testsStarted := make(map[string]struct{})
 	for i := 0; i < len(lines); i++ {
@@ -139,35 +139,35 @@ func ParseErrorLog(name string) *Result {
 			testResults = append(testResults, r)
 			delete(testsStarted, r.name)
 
-		case strings.HasPrefix(lines[i], moduleFail):
+		case strings.HasPrefix(lines[i], packageFail):
 			fail := strings.Split(strings.TrimSpace(strings.TrimPrefix(lines[i], "FAIL")), "\t")
-			moduleName := strings.TrimPrefix(fail[0], modulePrefix)
-			moduleDur, err := time.ParseDuration(fail[1])
+			packageName := strings.TrimPrefix(fail[0], packagePrefix)
+			packageDur, err := time.ParseDuration(fail[1])
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			mr := &ModuleResult{
-				name:     moduleName,
+			mr := &PackageResult{
+				name:     packageName,
 				result:   Status(FAILED),
-				duration: moduleDur,
+				duration: packageDur,
 			}
-			moduleResults = append(moduleResults, mr)
+			packageResults = append(packageResults, mr)
 
-		case strings.HasPrefix(lines[i], modulePass):
+		case strings.HasPrefix(lines[i], packagePass):
 			pass := strings.Split(strings.TrimSpace(strings.TrimPrefix(lines[i], "ok")), "\t")
-			moduleName := strings.TrimPrefix(pass[0], modulePrefix)
-			moduleDur, err := time.ParseDuration(pass[1])
+			packageName := strings.TrimPrefix(pass[0], packagePrefix)
+			packageDur, err := time.ParseDuration(pass[1])
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			mr := &ModuleResult{
-				name:     moduleName,
+			mr := &PackageResult{
+				name:     packageName,
 				result:   Status(PASSED),
-				duration: moduleDur,
+				duration: packageDur,
 			}
-			moduleResults = append(moduleResults, mr)
+			packageResults = append(packageResults, mr)
 
 		default:
 		}
@@ -185,10 +185,10 @@ func ParseErrorLog(name string) *Result {
 	}
 
 	return &Result{
-		commitHash:    commitHash,
-		dateTime:      dateTime,
-		testResults:   testResults,
-		moduleResults: moduleResults,
+		commitHash:     commitHash,
+		dateTime:       dateTime,
+		testResults:    testResults,
+		packageResults: packageResults,
 	}
 }
 

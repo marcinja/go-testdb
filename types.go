@@ -16,14 +16,14 @@ const (
 var StatusStrings = [...]string{"PASSED", "SKIPPED", "FAILED", "UNDETERMINED"}
 
 type Result struct {
-	commitHash    string
-	dateTime      time.Time
-	testResults   []*TestResult
-	moduleResults []*ModuleResult
+	commitHash     string
+	dateTime       time.Time
+	testResults    []*TestResult
+	packageResults []*PackageResult
 }
 
-// ModuleResult stores information about the tests of a single module.
-type ModuleResult struct {
+// PackageResult stores information about the tests of a single package.
+type PackageResult struct {
 	name     string
 	result   Status
 	duration time.Duration

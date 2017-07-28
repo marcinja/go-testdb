@@ -18,7 +18,7 @@ func InsertLogToDB(filename string, db *sql.DB) {
 	if err != nil {
 		panic(err)
 	}
-	moduleStmt, err := db.Prepare("INSERT modules SET commitHash=?,dateTime=?,name=?,result=?,duration=?")
+	packageStmt, err := db.Prepare("INSERT packages SET commitHash=?,dateTime=?,name=?,result=?,duration=?")
 	if err != nil {
 		panic(err)
 	}
@@ -31,9 +31,9 @@ func InsertLogToDB(filename string, db *sql.DB) {
 		}
 	}
 
-	for _, m := range results.moduleResults {
+	for _, m := range results.packageResults {
 		statusString := StatusStrings[int(m.result)] // MySql expects a string type for its enum.
-		_, err := moduleStmt.Exec(results.commitHash, results.dateTime, m.name, statusString, int(m.duration.Seconds()))
+		_, err := packageStmt.Exec(results.commitHash, results.dateTime, m.name, statusString, int(m.duration.Seconds()))
 		if err != nil {
 			panic(err)
 		}
