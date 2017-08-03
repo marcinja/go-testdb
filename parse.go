@@ -28,6 +28,9 @@ const (
 
 	//Reference time formatting for dateTimes.
 	referenceTime string = "2006-01-02-15:04:05"
+
+	// panicTest checks for when a test has resulted in a panic
+	panicTest string = "panic: "
 )
 
 // ReadFile reads the file with the given name and returns a slice of string,
@@ -138,6 +141,20 @@ func ParseErrorLog(name string) *Result {
 
 			testResults = append(testResults, r)
 			delete(testsStarted, r.name)
+
+		case strings.HasPrefix(lines[i], panicTest):
+			// TODO: Maybe make a PanicTest type? need to decide how to change
+			// db schema with that though.
+
+			// This lets us search for panics easily without changing the db
+			// setup.
+			pr := &TestResult{
+				name:     "PANIC",
+				result:   Status(FAILED),
+				duration: 0,
+			}
+
+			testResults = append(testResults, pr)
 
 		case strings.HasPrefix(lines[i], packageFail):
 			fail := strings.Split(strings.TrimSpace(strings.TrimPrefix(lines[i], "FAIL")), "\t")
