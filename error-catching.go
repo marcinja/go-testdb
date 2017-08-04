@@ -85,3 +85,26 @@ func failedTestsFromLastWeek(db *sql.DB) []*failResult {
 
 	return results
 }
+
+func panicsFromLastDay(db *sql.DB) []time.Time {
+	rows, err := db.Query("select dateTime from tests where where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and name='PANIC'")
+	if err != nil {
+		log.Fatal("Error selecting panic results: ", err)
+	}
+	var results []time.Time
+	defer rows.Close()
+	for rows.Next() {
+		var t time.Time
+		err := rows.Scan(&time)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, t)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return results
+}
