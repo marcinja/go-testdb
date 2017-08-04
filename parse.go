@@ -219,7 +219,7 @@ func handleSkippedTest(testOutput []string) *TestResult {
 	durStr = strings.TrimPrefix(strings.TrimSuffix(durStr, ")"), "(") // Remove surrounding parentheses.
 	dur, err := time.ParseDuration(durStr)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Errord: parsing skipped test duration: ", err)
 	}
 
 	// A skipped test can have 0 or more lines of output.
@@ -254,7 +254,7 @@ func handleFailedTest(testOutput []string) *TestResult {
 	durStr = strings.TrimPrefix(strings.TrimSuffix(durStr, ")"), "(") // Remove surrounding parentheses.
 	dur, err := time.ParseDuration(durStr)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Errord: parsing failed test duration: ", err)
 	}
 
 	// A failed test can have 0 or more lines of output.

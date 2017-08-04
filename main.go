@@ -52,13 +52,19 @@ func main() {
 	}
 	defer db.Close()
 
-	names := testNamesFromLastWeek(db)
+	diffs := performanceDiffsFromLastWeek(db)
+	//
+	// for _, name := range names {
+	// 	r := passingResultsFromLastWeek(name, db)
+	// 	for _, res := range r {
+	// 		println(res.duration)
+	// 	}
+	// }
 
-	for _, name := range names {
-		r := resultsFromLastWeek(name, db)
-		for _, res := range r {
-			println(res.duration)
-		}
+	for _, diff := range diffs {
+		println("DIFFS")
+		println(diff.name)
+		println(diff.performanceChange)
 	}
 
 }
