@@ -18,7 +18,6 @@ TODO: should this have a NULL safe sql dateTime type?
 
 *?
 
-
 */
 
 // TestResult represents the information given from a single test fail.
@@ -31,8 +30,8 @@ type failResult struct {
 	duration   time.Duration
 }
 
-func failedTestsFromLastWeek(db *sql.DB) []*failResult {
-	rows, err := db.Query(" select commitHash, dateTime, name, output, duration from tests where datetime between date_sub(now(), INTERVAL 1 day) and now() and result='FAILED';")
+func (env *Environment) failedTestsFromLastDay() []*failResult {
+	rows, err := env.db.Query("select commitHash, dateTime, name, output, duration from tests where datetime between date_sub(now(), INTERVAL 1 day) and now() and result='FAILED';")
 	if err != nil {
 		log.Fatal("Error selecting failed results: ", err)
 	}
@@ -86,8 +85,9 @@ func failedTestsFromLastWeek(db *sql.DB) []*failResult {
 	return results
 }
 
-func panicsFromLastDay(db *sql.DB) []time.Time {
-	rows, err := db.Query("select dateTime from tests where where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and name='PANIC'")
+func (env *Environment) panicsFromLastDay() []time.Time {
+	rows, err := env.db.Query("select dateTime from tests where datetime between date_sub(now(), INTERVAL 1 week) and now() and name='PANIC';")
+
 	if err != nil {
 		log.Fatal("Error selecting panic results: ", err)
 	}
@@ -95,7 +95,7 @@ func panicsFromLastDay(db *sql.DB) []time.Time {
 	defer rows.Close()
 	for rows.Next() {
 		var t time.Time
-		err := rows.Scan(&time)
+		err := rows.Scan(&t)
 		if err != nil {
 			log.Fatal(err)
 		}

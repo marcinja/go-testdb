@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,14 +8,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func InsertLogToDB(filename string, db *sql.DB) {
+func (env *Environment) InsertLogToDB(filename string) {
 	results := ParseErrorLog(filename)
 
-	testStmt, err := db.Prepare("INSERT tests SET commitHash=?,dateTime=?,name=?,result=?,output=?,duration=?")
+	testStmt, err := env.db.Prepare("INSERT tests SET commitHash=?,dateTime=?,name=?,result=?,output=?,duration=?")
 	if err != nil {
 		log.Fatal("Error preparing test insert statement: ", err)
 	}
-	packageStmt, err := db.Prepare("INSERT packages SET commitHash=?,dateTime=?,name=?,result=?,duration=?")
+	packageStmt, err := env.db.Prepare("INSERT packages SET commitHash=?,dateTime=?,name=?,result=?,duration=?")
 	if err != nil {
 		log.Fatal("Error preparing package insert statement: ", err)
 	}
@@ -38,15 +37,7 @@ func InsertLogToDB(filename string, db *sql.DB) {
 	}
 }
 
-func InsertLogsFromDirectory(dir string) {
-	dbInfo := ReadFile(dbInfoFile)[0]
-	db, err := sql.Open("mysql",
-		dbInfo)
-	if err != nil {
-		log.Fatal("Error opening db: ", err)
-	}
-	defer db.Close()
-
+func (env *Environment) InsertLogsFromDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatal("Error reading directory: ", err)
@@ -55,25 +46,13 @@ func InsertLogsFromDirectory(dir string) {
 		if f.IsDir() {
 			continue
 		}
-		InsertLogToDB(dir+f.Name(), db)
+		env.InsertLogToDB(dir + f.Name())
 	}
 }
 
-func InsertSingleLog(filename string) {
-	dbInfo := ReadFile(dbInfoFile)[0]
-	db, err := sql.Open("mysql",
-		dbInfo)
-	if err != nil {
-		log.Fatal("Error reading file: ", err)
-	}
-	defer db.Close()
-
-	InsertLogToDB(filename, db)
-}
-
-func mostRecentCommitHash(db *sql.DB) string {
+func (env *Environment) mostRecentCommitHash() string {
 	var hash string
-	err := db.QueryRow("select commitHash from tests order by datetime desc limit 1;").Scan(&hash)
+	err := env.db.QueryRow("select commitHash from tests order by datetime desc limit 1;").Scan(&hash)
 	if err != nil {
 		log.Fatal("Error getting commit hash: ", err)
 	}

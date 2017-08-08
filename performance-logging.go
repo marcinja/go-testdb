@@ -4,14 +4,12 @@ import (
 	"database/sql"
 	"log"
 	"math"
-	"time"
 )
 
-// type performanceDiff struct {
-// 	name                string
-// 	lastWeeksAvgPerf    float64
-// 	latestCommitAvgPerf float64
-// }
+const (
+	avgFromCommitHash string = "select AVG(duration) from tests where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and name = ? and commitHash = ? and result='PASSED';"
+	avgFromLastWeek   string = "select AVG(duration) from tests where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and name = ? and result='PASSED' and commitHash != ?;"
+)
 
 type performanceDiff struct {
 	name              string
@@ -42,10 +40,10 @@ func averageDuration(results []*TestResult) float64 {
 
 // averageDurationFromCommitHash returns the average duration for a given test
 // at a specific commit hash. Returns true if the result from MySql is not NULL.
-func averageDurationFromCommitHash(testName string, latestCommit string, db *sql.DB) (float64, bool) {
+func averageDurationFromCommitHash(stmt *sql.Stmt, testName string, latestCommit string) (float64, bool) {
 	var avg sql.NullFloat64
 
-	rows, err := db.Query("select AVG(duration) from tests where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and name = ? and commitHash = ? and result='PASSED';", testName, latestCommit)
+	rows, err := stmt.Query(testName, latestCommit)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,9 +70,9 @@ func averageDurationFromCommitHash(testName string, latestCommit string, db *sql
 // averageDurationFromLastWeek returns the average duration for a given test for
 // the last week, ignoring results from the most recent commit. Returns true if
 // the result from MySql is not NULL.
-func averageDurationFromLastWeek(testName string, hash string, db *sql.DB) (float64, bool) {
+func averageDurationFromLastWeek(stmt *sql.Stmt, testName string, hash string) (float64, bool) {
 	var avg sql.NullFloat64
-	rows, err := db.Query("select AVG(duration) from tests where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and name = ? and result='PASSED' and commitHash != ?;", testName, hash)
+	rows, err := stmt.Query(testName, hash)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,17 +99,29 @@ func averageDurationFromLastWeek(testName string, hash string, db *sql.DB) (floa
 // summarize performance changes for tests greater than 5 seconds in length and
 // which saw a 20% or greater change in performance over the last week compared
 // to the most recent commit.
-func performanceDiffsFromLastWeek(db *sql.DB) []*performanceDiff {
-	latestCommit := mostRecentCommitHash(db)
-	testNames := testNamesFromLastWeek(db)
+func (e *Environment) performanceDiffsFromLastWeek() []*performanceDiff {
+	latestCommit := e.mostRecentCommitHash()
+	testNames := e.testNamesFromLastWeek()
+
+	avgFromLastWeekStmt, err := e.db.Prepare(avgFromLastWeek)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer avgFromLastWeekStmt.Close()
+
+	avgFromCommitHashStmt, err := e.db.Prepare(avgFromCommitHash)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer avgFromCommitHashStmt.Close()
 
 	var diffs []*performanceDiff
 	for _, name := range testNames {
-		avgFromResults, ok := averageDurationFromLastWeek(name, latestCommit, db)
+		avgFromResults, ok := averageDurationFromLastWeek(avgFromLastWeekStmt, name, latestCommit)
 		if !ok {
 			continue
 		}
-		avgFromRecentResults, ok := averageDurationFromCommitHash(name, latestCommit, db)
+		avgFromRecentResults, ok := averageDurationFromCommitHash(avgFromCommitHashStmt, name, latestCommit)
 		if !ok {
 			continue
 		}
@@ -138,12 +148,12 @@ func performanceDiffsFromLastWeek(db *sql.DB) []*performanceDiff {
 
 // testNamesFromLastWeek returns a slice containing the names of every
 // individual test that was run in the last week.
-func testNamesFromLastWeek(db *sql.DB) []string {
+func (env *Environment) testNamesFromLastWeek() []string {
 	const nameQuery string = "select name from tests where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() group by name;"
 
 	var results []string
 	// Make query to db.
-	rows, err := db.Query(nameQuery)
+	rows, err := env.db.Query(nameQuery)
 	if err != nil {
 		panic(err)
 	}
@@ -157,75 +167,6 @@ func testNamesFromLastWeek(db *sql.DB) []string {
 			log.Fatal(err)
 		}
 		results = append(results, name)
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return results
-}
-
-func passingResultsFromLastWeek(testName string, db *sql.DB) []*TestResult {
-	rows, err := db.Query("select output, duration from tests where datetime between date_sub(now(), INTERVAL 1 WEEK) and now() and result='PASSED' and name=?;", testName)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var results []*TestResult
-	defer rows.Close()
-	for rows.Next() {
-		// TestResult fields
-		var (
-			output   string
-			duration time.Duration
-		)
-		err := rows.Scan(&output, &duration)
-		if err != nil {
-			log.Fatal(err)
-		}
-		tr := &TestResult{
-			name:     testName,
-			result:   Status(PASSED),
-			output:   output,
-			duration: duration,
-		}
-
-		results = append(results, tr)
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return results
-}
-
-func resultsFromCommitHash(hash string, testName string, db *sql.DB) []*TestResult {
-	rows, err := db.Query("select output, duration from tests where name = ? and commitHash = ? and result='PASSED'", testName, hash)
-	if err != nil {
-		log.Fatal("Error selecting commit hash results: ", err)
-	}
-	var results []*TestResult
-	defer rows.Close()
-	for rows.Next() {
-		// TestResult fields
-		var (
-			output   string
-			duration time.Duration
-		)
-		err := rows.Scan(&output, &duration)
-		if err != nil {
-			log.Fatal(err)
-		}
-		tr := &TestResult{
-			name:     testName,
-			result:   Status(PASSED),
-			output:   output,
-			duration: duration,
-		}
-
-		results = append(results, tr)
 	}
 	err = rows.Err()
 	if err != nil {
