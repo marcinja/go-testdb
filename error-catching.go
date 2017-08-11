@@ -6,20 +6,6 @@ import (
 	"time"
 )
 
-/*
-
-GOAL:
-
-select name, dateTime, output from tests where datetime between date_sub(now(), INTERVAL 1 day) and now() and result='FAILED';
-
-TODO: Panic catcher will also return file name
-
-TODO: should this have a NULL safe sql dateTime type?
-
-*?
-
-*/
-
 // TestResult represents the information given from a single test fail.
 type failResult struct {
 	commitHash string
@@ -30,6 +16,7 @@ type failResult struct {
 	duration   time.Duration
 }
 
+// failedTestsFromLastDay gets the data every test that failed in the last day.
 func (env *Environment) failedTestsFromLastDay() []*failResult {
 	rows, err := env.db.Query("select commitHash, dateTime, name, output, duration from tests where datetime between date_sub(now(), INTERVAL 1 day) and now() and result='FAILED';")
 	if err != nil {
@@ -85,8 +72,9 @@ func (env *Environment) failedTestsFromLastDay() []*failResult {
 	return results
 }
 
+// panicsFromLastDay gets the dateTime of every test run in the last day which has had a panic occur.
 func (env *Environment) panicsFromLastDay() []time.Time {
-	rows, err := env.db.Query("select dateTime from tests where datetime between date_sub(now(), INTERVAL 1 week) and now() and name='PANIC';")
+	rows, err := env.db.Query("select dateTime from tests where datetime between date_sub(now(), INTERVAL 1 day) and now() and name='PANIC';")
 
 	if err != nil {
 		log.Fatal("Error selecting panic results: ", err)

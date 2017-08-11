@@ -8,6 +8,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// InsertLogToDB records data from a test log at the given file path into the
+// environment's database.
 func (env *Environment) InsertLogToDB(filename string) {
 	results := ParseErrorLog(filename)
 
@@ -37,6 +39,8 @@ func (env *Environment) InsertLogToDB(filename string) {
 	}
 }
 
+// InsertLogsFromDirectory records data from the test logs in the given directory into the
+// environment's database.
 func (env *Environment) InsertLogsFromDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -50,6 +54,8 @@ func (env *Environment) InsertLogsFromDirectory(dir string) {
 	}
 }
 
+// mostRecentCommitHash gets the most recent commit hash of any test stored in
+// the environment's databse.
 func (env *Environment) mostRecentCommitHash() string {
 	var hash string
 	err := env.db.QueryRow("select commitHash from tests order by datetime desc limit 1;").Scan(&hash)

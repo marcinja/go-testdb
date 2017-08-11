@@ -2,8 +2,6 @@ package main
 
 import "time"
 
-// TODO: Think about which level to include logic about version numbers/RCs.
-
 type Status int
 
 const (
