@@ -66,7 +66,6 @@ func main() {
 		subj, body := env.DailyUpdate()
 		email(*emailPtr, *namePtr, subj, body)
 
-		fmt.Printf("Run this command with the '-file FILENAME' flag, or with -email and -name flags.")
 		return
 	}
 
@@ -142,6 +141,6 @@ func email(recipientEmail, recipientName, subject, body string) error {
 	m.SetHeader("From", emailAddr)
 	m.SetAddressHeader("To", recipientEmail, recipientName)
 	m.SetHeader("Subject", subject)
-	m.SetBody("text/html", body)
+	m.SetBody("text/plain", body)
 	return gomail.Send(s, m)
 }
